@@ -11,7 +11,7 @@
 - ✅ Bash, Python, and PowerShell reverse shell payloads
 - ✅ Advanced encoders: Base64, XOR, ROT13
 - ✅ Delivery methods: HTTP server, SMTP mailer
-- ✅ Listener support: Netcat and Metasploit auto-launch
+- ✅ Listener support: Netcat auto-launch
 - ✅ EXE payload generation (PyInstaller)
 - ✅ Interactive CLI with beautiful banners
 - ✅ Runs like fsociety with `./kalkixploit` command
